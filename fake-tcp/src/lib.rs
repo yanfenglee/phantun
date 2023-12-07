@@ -441,6 +441,10 @@ impl Stack {
             tokio::select! {
                 size = tun.recv(&mut buf) => {
                     let size = size.unwrap();
+                    
+                    //TODO for test
+                    trace!("receive packet size: {}", size);
+
                     buf.truncate(size);
                     let buf = buf.freeze();
 
