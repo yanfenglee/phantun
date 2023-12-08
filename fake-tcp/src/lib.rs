@@ -272,7 +272,7 @@ impl Socket {
                     let buf = self.build_tcp_packet(tcp::TcpFlags::SYN, None);
                     self.tun.send(&buf).await.unwrap();
                     self.state = State::SynSent;
-                    info!("Sent SYN to server");
+                    info!("Sent SYN to server: {:?}", self);
                 }
                 State::SynSent => {
                     match time::timeout(TIMEOUT, self.incoming.recv_async()).await {
@@ -316,7 +316,7 @@ impl Socket {
         None
     }
 }
-
+                      
 impl Drop for Socket {
     /// Drop the socket and close the TCP connection
     fn drop(&mut self) {
@@ -337,7 +337,7 @@ impl Drop for Socket {
         if let Err(e) = self.tun.try_send(&buf) {
             warn!("Unable to send RST to remote end: {}", e);
         }
-
+  
         info!("Fake TCP connection to {} closed", self);
     }
 }
@@ -454,6 +454,9 @@ impl Stack {
                                 SocketAddr::new(ip_packet.get_destination(), tcp_packet.get_destination());
                             let remote_addr = SocketAddr::new(ip_packet.get_source(), tcp_packet.get_source());
 
+                            //TODO for test
+                            trace!("test parsed msg: {:?} <- {:?}", local_addr, remote_addr);
+
                             let tuple = AddrTuple::new(local_addr, remote_addr);
                             if let Some(c) = tuples.get(&tuple) {
                                 if c.send_async(buf).await.is_err() {
@@ -486,6 +489,8 @@ impl Stack {
                                     .unwrap()
                                     .contains(&tcp_packet.get_destination())
                             {
+                                trace!("receive packet sequence: {}", tcp_packet.get_sequence());
+
                                 // SYN seen on listening socket
                                 if tcp_packet.get_sequence() == 0 {
                                     let (sock, incoming) = Socket::new(
