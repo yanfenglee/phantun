@@ -272,7 +272,7 @@ impl Socket {
                     let buf = self.build_tcp_packet(tcp::TcpFlags::SYN, None);
                     self.tun.send(&buf).await.unwrap();
                     self.state = State::SynSent;
-                    info!("Sent SYN to server: {:?}", self);
+                    info!("Sent SYN to server: {:?} -> {:?}", self.local_addr, self.remote_addr);
                 }
                 State::SynSent => {
                     match time::timeout(TIMEOUT, self.incoming.recv_async()).await {
